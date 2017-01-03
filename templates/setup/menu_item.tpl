@@ -1,0 +1,1 @@
+<a href="{devblocks_url}c=config&a=linkedin{/devblocks_url}">LinkedIn</a>
