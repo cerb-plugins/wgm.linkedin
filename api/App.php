@@ -8,8 +8,15 @@ class WgmLinkedIn_API {
 	private $_oauth = null;
 	
 	private function __construct() {
-		$consumer_key = DevblocksPlatform::getPluginSetting('wgm.linkedin','api_key','');
-		$consumer_secret = DevblocksPlatform::getPluginSetting('wgm.linkedin','secret_key','');
+		if(false == ($credentials = DevblocksPlatform::getPluginSetting('wgm.linkedin','credentials',false,true,true)))
+			return;
+		
+		@$consumer_key = $credentials['consumer_key'];
+		@$consumer_secret = $credentials['consumer_secret'];
+		
+		if(empty($consumer_key) || empty($consumer_secret))
+			return;
+		
 		$this->_oauth = DevblocksPlatform::getOAuthService($consumer_key, $consumer_secret);
 	}
 	
@@ -68,13 +75,9 @@ class WgmLinkedIn_SetupSection extends Extension_PageSection {
 		
 		$visit->set(ChConfigurationPage::ID, 'linkedin');
 		
-		$params = array(
-			'consumer_key' => DevblocksPlatform::getPluginSetting('wgm.linkedin','consumer_key',''),
-			'consumer_secret' => DevblocksPlatform::getPluginSetting('wgm.linkedin','consumer_secret',''),
-		);
-		$tpl->assign('params', $params);
+		$credentials = DevblocksPlatform::getPluginSetting('wgm.linkedin','credentials',false,true,true);
+		$tpl->assign('credentials', $credentials);
 
-		
 		$tpl->display('devblocks:wgm.linkedin::setup/index.tpl');
 	}
 	
@@ -86,8 +89,12 @@ class WgmLinkedIn_SetupSection extends Extension_PageSection {
 			if(empty($consumer_key) || empty($consumer_secret))
 				throw new Exception("Both the 'Client ID' and 'Client Secret' are required.");
 			
-			DevblocksPlatform::setPluginSetting('wgm.linkedin', 'consumer_key', $consumer_key);
-			DevblocksPlatform::setPluginSetting('wgm.linkedin', 'consumer_secret', $consumer_secret);
+			$credentials = [
+				'consumer_key' => $consumer_key,
+				'consumer_secret' => $consumer_secret,
+			];
+			
+			DevblocksPlatform::setPluginSetting('wgm.linkedin', 'credentials', $credentials, true, true);
 			
 			echo json_encode(array('status'=>true, 'message'=>'Saved!'));
 			return;
@@ -100,12 +107,15 @@ class WgmLinkedIn_SetupSection extends Extension_PageSection {
 };
 endif;
 
-class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements IServiceProvider_OAuth {
+class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements IServiceProvider_OAuth, IServiceProvider_HttpRequestSigner {
 	const ID = 'wgm.linkedin.service.provider';
 
 	private function _getAppKeys() {
-		$consumer_key = DevblocksPlatform::getPluginSetting('wgm.linkedin','consumer_key','');
-		$consumer_secret = DevblocksPlatform::getPluginSetting('wgm.linkedin','consumer_secret','');
+		if(false == ($credentials = DevblocksPlatform::getPluginSetting('wgm.linkedin','credentials',false,true,true)))
+			return false;
+		
+		@$consumer_key = $credentials['consumer_key'];
+		@$consumer_secret = $credentials['consumer_secret'];
 		
 		if(empty($consumer_key) || empty($consumer_secret))
 			return false;
@@ -231,4 +241,20 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 		
 		echo "<script>window.close();</script>";
 	}
+	
+	// [TODO] Tokens expire in 60 days
+	function authenticateHttpRequest(Model_ConnectedAccount $account, &$ch, &$verb, &$url, &$body, &$headers) {
+		$credentials = $account->decryptParams();
+		
+		if(
+			!isset($credentials['access_token'])
+		)
+			return false;
+		
+		// Add a bearer token
+		$headers[] = sprintf('Authorization: Bearer %s', $credentials['access_token']);
+		
+		return true;
+	}
+	
 }
