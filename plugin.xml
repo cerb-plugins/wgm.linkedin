@@ -42,7 +42,7 @@
 
 		<extension point="cerberusweb.ui.page.menu.item">
 			<id>wgm.linkedin.setup.menu</id>
-			<name>LinkedIn Plugins Menu Item</name>
+			<name>LinkedIn</name>
 			<class>
 				<file>api/App.php</file>
 				<name>WgmLinkedIn_SetupMenuItem</name>
