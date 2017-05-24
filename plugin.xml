@@ -4,7 +4,7 @@
 	<name>LinkedIn Integration</name>
 	<description>This plugin provides integration with LinkedIn via their REST API.  It is intended to be a bridge used by other plugins to communicate with LinkedIn services.</description>
 	<author>Webgroup Media, LLC.</author>
-	<version>0.1.0</version>
+	<version>0.1.1</version>
 	<link>http://www.cerbweb.com/book/latest/plugins/wgm.linkedin.html</link>
 	<image>plugin.png</image>
  
