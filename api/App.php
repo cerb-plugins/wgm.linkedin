@@ -17,7 +17,7 @@ class WgmLinkedIn_API {
 		if(empty($consumer_key) || empty($consumer_secret))
 			return;
 		
-		$this->_oauth = DevblocksPlatform::getOAuthService($consumer_key, $consumer_secret);
+		$this->_oauth = DevblocksPlatform::services()->oauth($consumer_key, $consumer_secret);
 	}
 	
 	/**
@@ -58,7 +58,7 @@ class WgmLinkedIn_SetupMenuItem extends Extension_PageMenuItem {
 	const POINT = 'wgm.linkedin.setup.menu';
 	
 	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('extension', $this);
 		$tpl->display('devblocks:wgm.linkedin::setup/menu_item.tpl');
 	}
@@ -70,7 +70,7 @@ class WgmLinkedIn_SetupSection extends Extension_PageSection {
 	const ID = 'wgm.linkedin.setup.page';
 	
 	function render() {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$visit = CerberusApplication::getVisit();
 		
 		$visit->set(ChConfigurationPage::ID, 'linkedin');
@@ -111,7 +111,7 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 	const ID = 'wgm.linkedin.service.provider';
 
 	function renderConfigForm(Model_ConnectedAccount $account) {
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$active_worker = CerberusApplication::getActiveWorker();
 		
 		$tpl->assign('account', $account);
@@ -126,7 +126,7 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 		@$edit_params = DevblocksPlatform::importGPC($_POST['params'], 'array', array());
 		
 		$active_worker = CerberusApplication::getActiveWorker();
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		
 		// Decrypt OAuth params
 		if(isset($edit_params['params_json'])) {
@@ -161,7 +161,7 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 	}
 	
 	function oauthRender() {
-		$url_writer = DevblocksPlatform::getUrlService();
+		$url_writer = DevblocksPlatform::services()->url();
 		
 		@$form_id = DevblocksPlatform::importGPC($_REQUEST['form_id'], 'string', '');
 		
@@ -172,7 +172,7 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 		if(false == ($app_keys = $this->_getAppKeys()))
 			return false;
 		
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret']);
 		
 		// Persist the view_id in the session
 		$_SESSION['oauth_state'] = CerberusApplication::generatePassword(24);
@@ -202,8 +202,8 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 		@$error_msg = DevblocksPlatform::importGPC($_REQUEST['error_description'], 'string', '');
 		
 		$active_worker = CerberusApplication::getActiveWorker();
-		$url_writer = DevblocksPlatform::getUrlService();
-		$encrypt = DevblocksPlatform::getEncryptionService();
+		$url_writer = DevblocksPlatform::services()->url();
+		$encrypt = DevblocksPlatform::services()->encryption();
 		
 		$redirect_url = $url_writer->write(sprintf('c=oauth&a=callback&ext=%s', ServiceProvider_LinkedIn::ID), true);
 		
@@ -213,7 +213,7 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 		// [TODO] Check $error state
 		// [TODO] Compare $state
 		
-		$oauth = DevblocksPlatform::getOAuthService($app_keys['key'], $app_keys['secret']);
+		$oauth = DevblocksPlatform::services()->oauth($app_keys['key'], $app_keys['secret']);
 		$oauth->setTokens($code);
 		
 		$params = $oauth->getAccessToken(WgmLinkedIn_API::LINKEDIN_ACCESS_TOKEN_URL, array(
@@ -245,7 +245,7 @@ class ServiceProvider_LinkedIn extends Extension_ServiceProvider implements ISer
 		}
 		
 		// Output
-		$tpl = DevblocksPlatform::getTemplateService();
+		$tpl = DevblocksPlatform::services()->template();
 		$tpl->assign('form_id', $form_id);
 		$tpl->assign('label', $label);
 		$tpl->assign('params_json', $encrypt->encrypt(json_encode($params)));
